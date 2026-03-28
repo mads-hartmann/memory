@@ -1,3 +1,4 @@
 - Add a pre-commit hook for formatting the markdown and checking the consistentcy of all links to other markdown documents
 - Add a skill for creating a new memory.md file. Some thoughts: Keep the document short and on topic. Be concise. Link to other docs. Link to external documentation for proof of claims.
 - Add a skill for quizzing knowledge
+- Experiment: Use it with [qmd](https://github.com/tobi/qmd) to search the memory easily
