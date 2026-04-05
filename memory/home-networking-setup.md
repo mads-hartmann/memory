@@ -10,8 +10,11 @@ This document explains different options for setting up my home network.
 
 ## Unknowns
 
-- **ONT Ethernet port speed:** If the ONT only has a 1 GbE Ethernet port, it becomes the bottleneck regardless of router or AP. Check the model number on the ONT label and look up its spec sheet.
+- **ONT Ethernet port speed (Options A & B):** If the ONT only has a 1 GbE Ethernet port, it becomes the bottleneck regardless of router or AP. Check the model number on the ONT label and look up its spec sheet. Not relevant for Option C since it bypasses the ONT.
 - **In-wall Ethernet cable category:** The cable category in the wall sockets (Cat5e, Cat6, etc.) determines the max speed of the runs to the basement. Cat5e supports 1 GbE, Cat6 supports up to 10 GbE (short runs) or reliable 2.5 GbE. Check the cable jacket print or the wall socket markings.
+- **FTP fiber connector type (Option C):** The FTP likely uses an SC/APC connector (green, angled), but this needs to be verified. The GPON SFP module will have an LC/UPC connector, so you'll need a patch cable with the right connector on each end (e.g. SC/APC to LC/UPC).
+- **TDC Net GPON credentials (Option C):** To replace the ONT with a GPON SFP module, you need the GPON serial number and possibly a PLOAM password or OMCI configuration that TDC Net expects. Check Danish forums (e.g. Pair.dk) for confirmed working setups, or contact TDC Net / Fibernet directly.
+- **TDC Net VLAN configuration (Option C):** TDC Net likely uses VLAN tagging for internet traffic (commonly VLAN 101 on their network). The UCG Fiber's WAN interface would need to be configured with the correct VLAN ID.
 
 ## Terminology
 
@@ -22,7 +25,10 @@ This document explains different options for setting up my home network.
 - WAN (Wide Area Network) — the "internet side" of your router. The WAN port connects to your ISP's network (via the ONT), as opposed to LAN ports which connect to your local devices.
 - PoE (Power over Ethernet) — delivers electrical power alongside data over an Ethernet cable, eliminating the need for a separate power adapter. Common standards: PoE (802.3af, 15W), PoE+ (802.3at, 30W), PoE++ (802.3bt, up to 60–100W).
 - FTP (Fiber termination point) - A passive box where the street fiber terminates inside the house.
-- ONT (Optical Network Terminal) - the active box that converts the optical signal to Ethernet
+- ONT (Optical Network Terminal) - the active box that converts the optical signal to Ethernet.
+- SFP / SFP+ (Small Form-factor Pluggable) — a hot-swappable transceiver module that plugs into a network device. SFP supports up to 1 Gbps, SFP+ supports up to 10 Gbps. Modules come in different media types: fiber optic (with LC connectors) or copper RJ45.
+- GPON (Gigabit Passive Optical Network) — the fiber-to-the-home technology used by TDC Net. A GPON SFP module lets a router authenticate directly on the ISP's optical network, replacing a standalone ONT.
+- VLAN (Virtual LAN) — a logical network segment within a physical network. ISPs often use VLAN tagging to separate services (internet, TV, VoIP) on the same fiber connection.
 
 ## Fiber & Ethernet sockets
 
@@ -43,6 +49,7 @@ This document explains different options for setting up my home network.
 - Would have to buy, depending on the setup I choose
     - [Cloud Gateway Fiber](https://eu.store.ui.com/eu/en/category/cloud-gateways-compact/collections/cloud-gateway-fiber/products/ucg-fiber)
     - [10G PoE++ Adapter (60W)](https://eu.store.ui.com/eu/en/category/accessories-poe-power/collections/pro-store-poe-and-power-adapters/products/uacc-poe-plus-plus-10g)
+    - [USW Pro XG 8 PoE](https://eu.store.ui.com/eu/en/category/switching-utility/products/usw-pro-xg-8-poe) — 8× 10 GbE RJ45 (all PoE++, up to 60W/port, 155W total), 2× 10G SFP+, Layer 3
 
 ## Option A
 
@@ -167,3 +174,81 @@ graph TD
 - Patch cables
     - Basement: wall jack #1 → UCG Fiber (WAN), UCG Fiber (LAN) → basement AP, UCG Fiber (LAN) → MacBook, UCG Fiber (LAN) → Linux server, UCG Fiber (LAN) → wall jack #2
     - 1st floor: wall jack #2 → PoE++ adapter, PoE++ adapter → U7 Pro XG
+
+
+
+## Option C
+
+UCG Fiber on the 1st floor with a GPON SFP module plugged directly into the FTP — no ONT needed. A USW Pro XG 8 PoE switch in the basement provides 10 GbE connectivity and PoE++ power to the basement AP. Uses one in-wall Ethernet run for LAN; the second run is free.
+
+### Topology
+
+```mermaid
+graph TD
+  subgraph floor1 ["1st Floor"]
+    FTP["TDC Net FTP<br>Fiber termination point"]
+    UCG["Cloud Gateway Fiber (UCG-Fiber)<br>Router, SFP+ WAN, 4x 2.5 GbE LAN, 30W PoE"]
+    AP_UP["U7 Pro XG<br>Wi-Fi 7 AP"]
+    J1_UP["Wall jack #1"]
+    J2_UP["Wall jack #2 (spare)"]
+  end
+
+  subgraph basement ["Basement"]
+    J1_BASE["Wall jack #1"]
+    J2_BASE["Wall jack #2 (spare)"]
+    SW["USW Pro XG 8 PoE<br>8x 10 GbE PoE++, 2x 10G SFP+"]
+    AP_BASE["U7 Pro XG<br>Wi-Fi 7 AP"]
+    MAC["MacBook Pro"]
+    SRV["Linux server"]
+  end
+
+  FTP -->|"Fiber patch cable<br>(SC/APC to LC/UPC)"| UCG
+  UCG -->|"2.5 GbE + PoE (LAN)"| AP_UP
+  UCG -->|"2.5 GbE (LAN)"| J1_UP -->|"In-wall run #1"| J1_BASE -->|"Ethernet"| SW
+  SW -->|"10 GbE + PoE++"| AP_BASE
+  SW -->|"10 GbE"| MAC
+  SW -->|"10 GbE"| SRV
+
+  style floor1 stroke-dasharray: 5 5
+  style basement stroke-dasharray: 5 5
+```
+
+### How it works
+
+- **Fiber WAN:** A short fiber patch cable goes directly from the FTP to the UCG Fiber's SFP+ port (with a GPON SFP module). The UCG Fiber authenticates on TDC Net's GPON network — no ONT needed.
+- **1st floor AP:** The UCG Fiber powers the 1st floor U7 Pro XG via its built-in PoE (~22W of 30W budget). Short Ethernet run, no separate PoE adapter needed.
+- **In-wall run #1 (LAN):** UCG Fiber LAN port → 1st floor wall jack → basement wall jack → USW Pro XG 8 PoE.
+- **Basement switch:** The USW Pro XG 8 PoE fans out to all basement devices over 10 GbE. It powers the basement AP via PoE++ (155W total budget, U7 Pro XG draws ~22W).
+- **In-wall run #2:** Free — available as a spare or for a future device.
+- **Wired devices:** MacBook Pro and Linux server plug into the switch's 10 GbE ports.
+- **Wi-Fi:** Both floors get Wi-Fi 7 via dedicated U7 Pro XG access points.
+
+### Advantages over Options A and B
+
+- **Eliminates the ONT** — one fewer device, one fewer power adapter, one fewer point of failure.
+- **10G WAN capability** — the SFP+ port supports up to 10 Gbps. If TDC Net upgrades your plan beyond 1 Gbps, you're ready without hardware changes. Options A and B are capped at 1 GbE on the WAN side.
+- **Frees up an in-wall Ethernet run** — Options A and B consume both runs (one WAN, one LAN). Option C only needs one (LAN to basement), leaving the second for future use.
+- **Shorter, simpler WAN path** — fiber goes directly from FTP to UCG Fiber with a single patch cable. No Ethernet conversion, no in-wall run for WAN.
+- **10 GbE in the basement** — the USW Pro XG 8 PoE provides 10 GbE to all basement devices. Options A and B are limited to 1 GbE (A) or 2.5 GbE (B) from the gateway's LAN ports.
+- **Plenty of spare ports** — the switch has 8x 10 GbE + 2x SFP+ ports. Only 3 are used (AP, MacBook, server), leaving 7 for future devices.
+- **Wi-Fi 7 on both floors** — same as Option B.
+- **No PoE++ adapter needed** — the UCG Fiber powers the 1st floor AP, the switch powers the basement AP. No standalone PoE injectors anywhere.
+
+### Limitations
+
+- **GPON SFP compatibility** — you need an SFP module that works with both TDC Net's GPON network and the UCG Fiber. Common options are the Ubiquiti UF-GP-C+ or third-party modules like the ODI DFP-34X-2C2. This requires research and possibly trial-and-error.
+- **ISP credentials** — the ONT normally handles GPON authentication transparently. With your own SFP module, you need to configure the GPON serial number, PLOAM password, or OMCI settings. TDC Net may or may not be cooperative.
+- **VLAN configuration** — TDC Net likely uses VLAN tagging (commonly VLAN 101). The UCG Fiber's WAN interface needs the correct VLAN ID.
+- **Higher cost** — the USW Pro XG 8 PoE is a significant addition compared to Options A and B. However, it future-proofs the basement with 10 GbE and ample PoE.
+- **UCG Fiber LAN ports are 2.5 GbE** — the uplink from UCG Fiber to the basement switch is capped at 2.5 GbE over the in-wall Ethernet run (assuming Cat6). This is the ceiling for aggregate basement traffic to/from the internet, though local traffic between switch ports is 10 GbE.
+
+### Equipment to buy
+
+- **Cloud Gateway Fiber (UCG-Fiber)** — replaces the Dream Machine, sits on the 1st floor next to the FTP
+- **GPON SFP module** — e.g. Ubiquiti UF-GP-C+ or compatible third-party module for TDC Net's network
+- **Second U7 Pro XG** — for the basement (you already own one for the 1st floor)
+- **USW Pro XG 8 PoE** — sits in the basement, provides 10 GbE + PoE++ to all basement devices
+- **Fiber patch cable** — SC/APC to LC/UPC (verify FTP connector type), short run from FTP to UCG Fiber SFP+ port
+- Patch cables
+    - 1st floor: UCG Fiber (LAN) → 1st floor AP, UCG Fiber (LAN) → wall jack #1
+    - Basement: wall jack #1 → switch, switch → basement AP, switch → MacBook, switch → Linux server
