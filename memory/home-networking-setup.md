@@ -6,7 +6,7 @@ This document explains different options for setting up my home network.
 
 ## Overview
 
-- Provider: Fibernet with cables owned by TDC Net
+- Provider: Waoo with cables owned by TDC Net
 - Access type: Fiber
 - Internet plan: 1000 Mbps
 
@@ -15,7 +15,7 @@ This document explains different options for setting up my home network.
 - **ONT Ethernet port speed (Options A & B):** If the ONT only has a 1 GbE Ethernet port, it becomes the bottleneck regardless of router or AP. Check the model number on the ONT label and look up its spec sheet. Not relevant for Option C since it bypasses the ONT.
 - **In-wall Ethernet cable category:** The cable category in the wall sockets (Cat5e, Cat6, etc.) determines the max speed of the runs to the basement. Cat5e supports 1 GbE, Cat6 supports up to 10 GbE (short runs) or reliable 2.5 GbE. Check the cable jacket print or the wall socket markings.
 - **FTP fiber connector type (Option C):** The FTP likely uses an SC/APC connector (green, angled), but this needs to be verified. The GPON SFP module will have an LC/UPC connector, so you'll need a patch cable with the right connector on each end (e.g. SC/APC to LC/UPC).
-- **TDC Net GPON credentials (Option C):** To replace the ONT with a GPON SFP module, you need the GPON serial number and possibly a PLOAM password or OMCI configuration that TDC Net expects. Check Danish forums (e.g. Pair.dk) for confirmed working setups, or contact TDC Net / Fibernet directly.
+- **TDC Net GPON credentials (Option C):** To replace the ONT with a GPON SFP module, you need the GPON serial number and possibly a PLOAM password or OMCI configuration that TDC Net expects. Check Danish forums (e.g. Pair.dk) for confirmed working setups, or contact TDC Net / Waoo directly.
 - **TDC Net VLAN configuration (Option C):** TDC Net likely uses VLAN tagging for internet traffic (commonly VLAN 101 on their network). The UCG Fiber's WAN interface would need to be configured with the correct VLAN ID.
 
 ## Terminology
