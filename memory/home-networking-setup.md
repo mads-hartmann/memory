@@ -2,6 +2,8 @@
 
 This document explains different options for setting up my home network.
 
+**Update**: I went with option A as it solves for me current needs and required the least amount of additional hardware. Option C is my preference but it's overkill and too expensive for me at the moment.
+
 ## Overview
 
 - Provider: Fibernet with cables owned by TDC Net
