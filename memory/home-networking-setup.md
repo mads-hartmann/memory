@@ -10,6 +10,10 @@ This document explains different options for setting up my home network.
 - Access type: Fiber
 - Internet plan: 1000 Mbps
 
+## Management
+
+- UniFi OS is accessible at [https://192.168.1.1](https://192.168.1.1), authenticated via ui.com credentials.
+
 ## Unknowns
 
 - **ONT Ethernet port speed (Options A & B):** If the ONT only has a 1 GbE Ethernet port, it becomes the bottleneck regardless of router or AP. Check the model number on the ONT label and look up its spec sheet. Not relevant for Option C since it bypasses the ONT.
