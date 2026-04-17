@@ -2,7 +2,7 @@
 
 Humans need memory too.
 
-This repository is a knowledge-base of sorts. It's a flat list of markdown documents files with front matter for metadata.
+This repository is a knowledge-base of sorts. It's a flat list of markdown documents files with front matter for metadata. y
 
 ```md
 ---
